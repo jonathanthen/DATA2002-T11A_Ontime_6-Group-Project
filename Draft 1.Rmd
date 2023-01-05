@@ -1,0 +1,73 @@
+---
+title: "group"
+author: "Yujia Zhai"
+date: "06/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(plotly)
+library(gt)
+library(lubridate)
+library(moonBook)
+library(webr)
+
+df = readxl::read_excel("data/Concrete_Data.xls") %>% 
+              janitor::clean_names()
+```
+
+```{r}
+colnames(df)[1] = "cement"
+colnames(df)[2] = "slag"
+colnames(df)[3] = "flyash"
+colnames(df)[4] = "water"
+colnames(df)[5] = "plasticizer"
+colnames(df)[6] = "coarseagg"
+colnames(df)[7] = "fineagg"
+colnames(df)[8] = "age"
+colnames(df)[9] = "strength"
+```
+
+```{r}
+p1 = ggplot(df, aes(x=cement, y=strength)) + geom_point(size=1)+theme_classic(base_size = 10)+
+  labs(x="Cement",y="Strength")+geom_smooth(method="loess",se=FALSE)+geom_smooth(method="lm",se=FALSE, col = "red")
+p1
+```
+```{r}
+p2 = ggplot(df, aes(x=slag, y=strength)) + geom_point(size=1)+theme_classic(base_size = 10)+
+  labs(x="Slag",y="Strength")+geom_smooth(method="loess",se=FALSE)+geom_smooth(method="lm",se=FALSE, col = "red")
+p2
+```
+```{r}
+p3 = ggplot(df, aes(x=flyash, y=strength)) + geom_point(size=1)+theme_classic(base_size = 10)+
+  labs(x="Flyash",y="Strength")+geom_smooth(method="loess",se=FALSE)+geom_smooth(method="lm",se=FALSE, col = "red")
+p3
+```
+```{r}
+p4 = ggplot(df, aes(x=water, y=strength)) + geom_point(size=1)+theme_classic(base_size = 10)+
+  labs(x="Water",y="Strength")+geom_smooth(method="loess",se=FALSE)+geom_smooth(method="lm",se=FALSE, col = "red")
+p4
+```
+```{r}
+p5 = ggplot(df, aes(x=plasticizer, y=strength)) + geom_point(size=1)+theme_classic(base_size = 10)+
+  labs(x="plasticizer",y="Strength")+geom_smooth(method="loess",se=FALSE)+geom_smooth(method="lm",se=FALSE, col = "red")
+p5
+```
+```{r}
+p6 = ggplot(df, aes(x=coarseagg, y=strength)) + geom_point(size=1)+theme_classic(base_size = 10)+
+  labs(x="coarseagg",y="Strength")+geom_smooth(method="loess",se=FALSE)+geom_smooth(method="lm",se=FALSE, col = "red")
+p6
+```
+```{r}
+p7 = ggplot(df, aes(x=fineagg, y=strength)) + geom_point(size=1)+theme_classic(base_size = 10)+
+  labs(x="fineagg",y="Strength")+geom_smooth(method="loess",se=FALSE)+geom_smooth(method="lm",se=FALSE, col = "red")
+p7
+```
+```{r}
+df = df %>%
+  mutate(lslag = log(slag))

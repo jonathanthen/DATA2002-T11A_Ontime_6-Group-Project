@@ -1,0 +1,446 @@
+---
+title: "DATA2002 Group Project"
+author: "T11A_Ontime_6"
+date: "USYD | DATA2002 | November 2020"
+output: 
+  rmdformats::material:
+    code_folding: hide
+    fig_caption: yes
+    number_sections: no
+    self_contained: yes
+  html_document:
+    toc: true
+    toc_depth: 2
+    code_folding: hide
+---
+
+````{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Packages Require to Run
+#install.packages("tidyverse")
+#install.packages("moonBook")
+#install.packages("webr")
+#install.packages("sjPlot")
+#install.packages("GGally")
+#install.packages("qtlcharts")
+#install.packages("ggfortify")
+#install.packages("caret")
+```
+
+# Page 1
+
+## Abstract
+
+--
+
+## Introduction
+
+--
+
+## Data Set
+
+--
+
+# Page 2
+
+## Analysis
+
+```{r, warning=FALSE, message=FALSE}
+#Load Required Packages
+library(tidyverse)
+library(moonBook)
+library(webr)
+library(sjPlot)
+library(GGally)
+library(qtlcharts)
+library(ggfortify)
+library(caret)
+
+df = readxl::read_excel("data/Concrete_Data.xls") %>% janitor::clean_names()
+```
+
+```{r}
+#Clean Column Names Manually
+colnames(df)[1] = "cement"
+colnames(df)[2] = "slag"
+colnames(df)[3] = "flyash"
+colnames(df)[4] = "water"
+colnames(df)[5] = "plasticizer"
+colnames(df)[6] = "coarseagg"
+colnames(df)[7] = "fineagg"
+colnames(df)[8] = "age"
+colnames(df)[9] = "strength"
+```
+
+We will only use those data points with 28 age_days.
+
+```{r}
+dfx = df %>% filter(age == 28)
+
+dfx
+```
+
+```{r}
+#Checking Linearity
+lm1 = lm(strength ~ cement, data = dfx)
+lm2 = lm(strength ~ slag, data = dfx)
+lm3 = lm(strength ~ flyash, data = dfx)
+lm4 = lm(strength ~ water, data = dfx)
+lm5 = lm(strength ~ plasticizer, data = dfx)
+lm6 = lm(strength ~ coarseagg, data = dfx)
+lm7 = lm(strength ~ fineagg, data = dfx)
+#lm8 = lm(strength ~ age, data = df)
+
+#Create a working dataframe
+df1 = dfx
+
+df1 = df1 %>% mutate(resid1 = lm1$residuals, fitted1 = lm1$fitted.values,
+                     resid2 = lm2$residuals, fitted2 = lm2$fitted.values,
+                     resid3 = lm3$residuals, fitted3 = lm3$fitted.values,
+                     resid4 = lm4$residuals, fitted4 = lm4$fitted.values,
+                     resid5 = lm5$residuals, fitted5 = lm5$fitted.values,
+                     resid6 = lm6$residuals, fitted6 = lm6$fitted.values,
+                     resid7 = lm7$residuals, fitted7 = lm7$fitted.values)
+
+#Cement
+p1 = ggplot(df1, aes(x = cement, y = strength)) + geom_point() +
+     labs(x = "Cement (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p1r = ggplot(df1, aes(x = cement, y = resid1)) + geom_point() +
+      labs(x = "Cement (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Slag
+p2 = ggplot(df1, aes(x = slag, y = strength)) + geom_point() +
+     labs(x = "Slag (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p2r = ggplot(df1, aes(x = slag, y = resid2)) + geom_point() +
+      labs(x = "Slag (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#FlyAsh
+p3 = ggplot(df1, aes(x = flyash, y = strength)) + geom_point() +
+     labs(x = "FlyAsh (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p3r = ggplot(df1, aes(x = flyash, y = resid3)) + geom_point() +
+      labs(x = "FlyAsh (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Water
+p4 = ggplot(df1, aes(x = water, y = strength)) + geom_point() +
+     labs(x = "Water (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p4r = ggplot(df1, aes(x = water, y = resid4)) + geom_point() +
+      labs(x = "Water (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Plasticizer
+p5 = ggplot(df1, aes(x = plasticizer, y = strength)) + geom_point() +
+     labs(x = "Plasticizer (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p5r = ggplot(df1, aes(x = plasticizer, y = resid5)) + geom_point() +
+      labs(x = "Plasticizer (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Coarse Aggregate
+p6 = ggplot(df1, aes(x = coarseagg, y = strength)) + geom_point() +
+     labs(x = "Coarse Aggregate (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p6r = ggplot(df1, aes(x = coarseagg, y = resid6)) + geom_point() +
+      labs(x = "Coarse Aggregate (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Fine Aggregate
+p7 = ggplot(df1, aes(x = fineagg, y = strength)) + geom_point() +
+     labs(x = "Fine Aggregate (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p7r = ggplot(df1, aes(x = fineagg, y = resid7)) + geom_point() +
+      labs(x = "Fine Aggregate (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Age
+#p8 = ggplot(df1, aes(x = age, y = strength)) + geom_point() +
+#     labs(x = "Age (Days)", y = "Concrete Strength (mpa)") +
+#     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+#p8r = ggplot(df1, aes(x = age, y = resid8)) + geom_point() +
+#      labs(x = "Age (Days)", y = "Residual") +
+#      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+
+```
+
+```{r}
+#Plots
+p1
+#p1r
+p2
+#p2r
+p3
+#p3r
+p4
+#p4r
+p5
+#p5r
+p6
+#p6r
+p7
+#p7r
+#p8
+#p8r
+```
+
+```{r, warnings=FALSE}
+#Residuals vs Fitted Values & QQ Plots
+autoplot(lm1, which = 1:2)
+autoplot(lm2, which = 1:2)
+autoplot(lm3, which = 1:2)
+autoplot(lm4, which = 1:2)
+autoplot(lm5, which = 1:2)
+autoplot(lm6, which = 1:2)
+autoplot(lm7, which = 1:2)
+#autoplot(lm8, which = 1:2)
+
+```
+
+
+```{r}
+#tab_model(lm1, show.ci = FALSE) # p-value <0.001
+#tab_model(lm2, show.ci = FALSE) # p-value <0.001
+#tab_model(lm3, show.ci = FALSE) # p-value =0.001
+#tab_model(lm4, show.ci = FALSE) # p-value <0.001
+#tab_model(lm5, show.ci = FALSE) # p-value <0.001
+#tab_model(lm6, show.ci = FALSE) # p-value <0.001
+#tab_model(lm7, show.ci = FALSE) # p-value <0.001
+#tab_model(lm8, show.ci = FALSE) # p-value <0.001
+```
+There is a significant relationship between each variable and concrete strength. 
+
+Linearity - Slag, FlyAsh and Water fails the linearity check.
+
+Homoscedasticity - For all the plots except Plasticizer, the spread looks reasonably constant over the range of values.
+
+Normality - Based on the QQPlot, the variables follow a normal distribution. We could appeal to the Central Limit Theorem because we have a reasonable amount of observations meaning our inferences are approximately valid.
+
+```{r}
+#Log Transformations (Log - Linear)
+df1 = df1 %>% mutate(lstrength = log(strength))
+
+loglm1 = lm(lstrength ~ cement, data = df1)
+loglm2 = lm(lstrength ~ slag, data = df1)
+loglm3 = lm(lstrength ~ flyash, data = df1)
+loglm4 = lm(lstrength ~ water, data = df1)
+loglm5 = lm(lstrength ~ plasticizer, data = df1)
+loglm6 = lm(lstrength ~ coarseagg, data = df1)
+loglm7 = lm(lstrength ~ fineagg, data = df1)
+#loglm8 = lm(lstrength ~ age, data = df1)
+
+df1 = df1 %>% mutate(lresid1 = loglm1$residuals, lfitted1 = loglm1$fitted.values,
+                     lresid2 = loglm2$residuals, lfitted2 = loglm2$fitted.values,
+                     lresid3 = loglm3$residuals, lfitted3 = loglm3$fitted.values,
+                     lresid4 = loglm4$residuals, lfitted4 = loglm4$fitted.values,
+                     lresid5 = loglm5$residuals, lfitted5 = loglm5$fitted.values,
+                     lresid6 = loglm6$residuals, lfitted6 = loglm6$fitted.values,
+                     lresid7 = loglm7$residuals, lfitted7 = loglm7$fitted.values)
+                     #lresid8 = loglm8$residuals, lfitted8 = loglm8$fitted.values)
+
+#Cement
+p1 = ggplot(df1, aes(x = cement, y = lstrength)) + geom_point() +
+     labs(x = "Cement (kg/m^3)", y = "Log Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p1r = ggplot(df1, aes(x = cement, y = lresid1)) + geom_point() +
+      labs(x = "Cement (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Slag
+p2 = ggplot(df1, aes(x = slag, y = lstrength)) + geom_point() +
+     labs(x = "Slag (kg/m^3)", y = "Log Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p2r = ggplot(df1, aes(x = slag, y = lresid2)) + geom_point() +
+      labs(x = "Slag (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#FlyAsh
+p3 = ggplot(df1, aes(x = flyash, y = lstrength)) + geom_point() +
+     labs(x = "FlyAsh (kg/m^3)", y = "Log Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p3r = ggplot(df1, aes(x = flyash, y = lresid3)) + geom_point() +
+      labs(x = "FlyAsh (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Water
+p4 = ggplot(df1, aes(x = water, y = lstrength)) + geom_point() +
+     labs(x = "Water (kg/m^3)", y = "Log Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p4r = ggplot(df1, aes(x = water, y = lresid4)) + geom_point() +
+      labs(x = "Water (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Plasticizer
+p5 = ggplot(df1, aes(x = plasticizer, y = lstrength)) + geom_point() +
+     labs(x = "Plasticizer (kg/m^3)", y = "Log Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p5r = ggplot(df1, aes(x = plasticizer, y = lresid5)) + geom_point() +
+      labs(x = "Plasticizer (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Coarse Aggregate
+p6 = ggplot(df1, aes(x = coarseagg, y = lstrength)) + geom_point() +
+     labs(x = "Coarse Aggregate (kg/m^3)", y = "Log Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p6r = ggplot(df1, aes(x = coarseagg, y = lresid6)) + geom_point() +
+      labs(x = "Coarse Aggregate (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Fine Aggregate
+p7 = ggplot(df1, aes(x = fineagg, y = lstrength)) + geom_point() +
+     labs(x = "Fine Aggregate (kg/m^3)", y = "Log Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p7r = ggplot(df1, aes(x = fineagg, y = lresid7)) + geom_point() +
+      labs(x = "Fine Aggregate (kg/m^3)", y = "Residual") +
+      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+#Age
+#p8 = ggplot(df1, aes(x = age, y = lstrength)) + geom_point() +
+#     labs(x = "Age (Days)", y = "Log Concrete Strength (mpa)") +
+#     geom_smooth(method = "lm", se = FALSE)
+#p8r = ggplot(df1, aes(x = age, y = lresid8)) + geom_point() +
+#      labs(x = "Age (Days)", y = "Residual") +
+#      geom_hline(yintercept = 0) + geom_smooth(method = "loess", se = FALSE)
+```
+
+```{r}
+#Log-Linear Plots
+p1
+p1r
+p2
+p2r
+p3
+p3r
+p4
+p4r
+p5
+p5r
+p6
+p6r
+p7
+p7r
+#p8
+#p8r
+```
+
+Overall, a Log-Linear transformation looks slightly better than the Linear-Linear.
+
+
+```{r}
+#Remove Age Column
+df = select(df, -age)
+df2 = df
+
+df2 = df2 %>% mutate(lstrength = log(strength))
+df2 = select(df2, -strength)
+
+M0 = lm(strength ~ 1, data = df) #Linear-Linear Null Model
+M1 = lm(strength ~ ., data = df) #Linear-Linear Full Model
+lM0 = lm(lstrength ~ 1, data = df2) #Log-Linear Null Model
+lM1 = lm(lstrength ~ ., data = df2) #Log-Linear Full Model
+
+#Linear-Linear Backward
+step.back.aic = step(M1, direction = "backward", trace = FALSE)
+round(summary(step.back.aic)$coef, 3)
+
+#Linear-Linear Forward
+step.fwd.aic = step(M0, scope = list(lower = M0, upper = M1), direction = "forward", trace = FALSE)
+round(summary(step.fwd.aic)$coef, 3)
+
+#Log-Linear Backward
+log.step.back.aic = step(lM1, direction = "backward", trace = FALSE)
+round(summary(log.step.back.aic)$coef, 3)
+
+#Log-Linear Forward
+log.step.fwd.aic = step(lM0, scope = list(lower = lM0, upper = lM1), direction = "forward", trace = FALSE)
+round(summary(log.step.fwd.aic)$coef, 3)
+```
+
+```{r}
+qtlcharts::iplotCorr(df)
+```
+```{r}
+qtlcharts::iplotCorr(df2)
+```
+
+
+
+```{r}
+#Linear-Linear Models
+sjPlot::tab_model(
+  step.fwd.aic, step.back.aic,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Linear-Linear Forward Model",
+                "Linear-Linear Backward Model")
+)
+```
+
+```{r}
+autoplot(step.fwd.aic, which = 1:2)
+```
+```{r}
+cv_linear= train(
+  strength ~ cement+plasticizer+slag+water+flyash,df,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_linear
+```
+
+
+```{r}
+#Log-Linear Models
+sjPlot::tab_model(
+  log.step.fwd.aic, log.step.back.aic,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Log-Linear Forward Model",
+                "Log-Linear Backward Model")
+)
+```
+
+The Log-Linear forward and backward models starting with 7 variables, produced a R^2 adjusted value of 0.383 and AIC of 1207.299 and 1207.138 respectively.
+
+```{r}
+autoplot(log.step.fwd.aic, which = 1:2)
+autoplot(log.step.back.aic, which = 1:2)
+```
+
+
+```{r}
+cv_log= train(
+  lstrength ~ cement+water+coarseagg+fineagg+plasticizer,df2,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_log
+```
+
+```{r}
+
+```
+
+
+```{r}
+#Stepwise Variable Selection
+lM2 = lm(lstrength ~ ., data = df2)
+drop1(lM2, test = "F")
+lM3 = update(lM2, . ~ . - coarseagg)
+drop1(lM3, test = "F")
+lM4 = update(lM3, . ~ . -fineagg)
+drop1(lM4, test = "F")
+
+sjPlot::tab_model(
+  lM4,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Stepwise Variable Selection")
+)
+```
+
+The stepwise variable selection produced a R^2 adjusted value of 0.382 and AIC of 1208.186. The stepwise is a better model as it has one lesser variable and the AIC differs only by 1.048 indicating somewhat equally fitting.
+
+
+--
+
+## Results
+
+--
+
+## Discussion and Conclusion
+
+--
+
+# References & Additional Figures
+

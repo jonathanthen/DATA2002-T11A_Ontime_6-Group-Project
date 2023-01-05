@@ -1,0 +1,128 @@
+---
+title: "Untitled"
+author: "Yujia Zhai"
+date: "11/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(moonBook)
+library(webr)
+library(sjPlot)
+library(GGally)
+library(qtlcharts)
+library(ggfortify)
+```
+
+```{r}
+y = readxl::read_excel("data/Concrete_Data.xls") %>% janitor::clean_names()
+colnames(y)[1] = "cement"
+colnames(y)[2] = "slag"
+colnames(y)[3] = "flyash"
+colnames(y)[4] = "water"
+colnames(y)[5] = "plasticizer"
+colnames(y)[6] = "coarseagg"
+colnames(y)[7] = "fineagg"
+colnames(y)[8] = "age"
+colnames(y)[9] = "strength"
+```
+
+```{r}
+y2=y %>% filter(age==28)
+y2 =select(y2,-age)
+y2
+```
+#linear-linear with all variables
+```{r}
+M0= lm(strength ~ 1, data = y2) #Linear-Linear Null Model
+M1= lm(strength ~ ., data = y2) #Linear-Linear Full Model
+
+#Linear-Linear Backward
+back1 = step(M1, direction = "backward", trace = FALSE)
+round(summary(back1)$coef, 3)
+
+#Linear-Linear Forward
+fwd1= step(M0, scope = list(lower = M0, upper = M1), direction = "forward", trace = FALSE)
+round(summary(fwd1)$coef, 3)
+```
+
+```{r}
+sjPlot::tab_model(
+  fwd1, back1,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Linear-Linear Forward Model",
+                "Linear-Linear Backward Model")
+)
+```
+
+```{r}
+autoplot(fwd1)
+```
+```{r}
+library(caret)
+linear1= train(
+  strength ~ cement+water+fineagg+coarseagg+slag+flyash,y2,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+linear1
+```
+
+#log-linear
+```{r}
+y3 = y2%>%mutate(lstrength=log(strength))
+y3=select(y3,-strength)
+y3
+```
+```{r}
+M2= lm(lstrength ~ 1, data = y3) #Log-Linear Null Model
+M3= lm(lstrength ~ ., data = y3) #Log-Linear Full Model
+
+#Log-Linear Backward
+back2 = step(M3, direction = "backward", trace = FALSE)
+round(summary(back2)$coef, 3)
+
+#Log-Linear Forward
+fwd2= step(M2, scope = list(lower = M2, upper = M3), direction = "forward", trace = FALSE)
+round(summary(fwd2)$coef, 3)
+```
+
+```{r}
+sjPlot::tab_model(
+  fwd2, back2,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Log-Linear Forward Model",
+                "Log-Linear Backward Model")
+)
+```
+
+```{r}
+autoplot(back2)
+autoplot(fwd2)
+```
+```{r}
+library(caret)
+logback1= train(
+  lstrength ~ cement+fineagg+coarseagg+slag+flyash,y3,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+logback1
+```
+
+```{r}
+logfwd1= train(
+  lstrength ~ cement+fineagg+coarseagg+slag+flyash+water,y3,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+logfwd1
+```
+

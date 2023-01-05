@@ -1,0 +1,278 @@
+---
+title: "Group Project"
+author: "Yujia Zhai"
+date: "07/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(moonBook)
+library(webr)
+library(sjPlot)
+library(GGally)
+library(qtlcharts)
+library(ggfortify)
+library(caret)
+
+df = readxl::read_excel("data/Concrete_Data.xls") %>% janitor::clean_names()
+```
+
+```{r}
+colnames(df)[1] = "cement"
+colnames(df)[2] = "slag"
+colnames(df)[3] = "flyash"
+colnames(df)[4] = "water"
+colnames(df)[5] = "plasticizer"
+colnames(df)[6] = "coarseagg"
+colnames(df)[7] = "fineagg"
+colnames(df)[8] = "age"
+colnames(df)[9] = "strength"
+```
+
+```{r}
+#Cement
+p1 = ggplot(df1, aes(x = cement, y = strength)) + geom_point() +
+     labs(x = "Cement (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+
+#Slag
+p2 = ggplot(df1, aes(x = slag, y = strength)) + geom_point() +
+     labs(x = "Slag (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+
+#FlyAsh
+p3 = ggplot(df1, aes(x = flyash, y = strength)) + geom_point() +
+     labs(x = "FlyAsh (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+
+#Water
+p4 = ggplot(df1, aes(x = water, y = strength)) + geom_point() +
+     labs(x = "Water (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+
+#Plasticizer
+p5 = ggplot(df1, aes(x = plasticizer, y = strength)) + geom_point() +
+     labs(x = "Plasticizer (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+#Coarse Aggregate
+p6 = ggplot(df1, aes(x = coarseagg, y = strength)) + geom_point() +
+     labs(x = "Coarse Aggregate (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+
+#Fine Aggregate
+p7 = ggplot(df1, aes(x = fineagg, y = strength)) + geom_point() +
+     labs(x = "Fine Aggregate (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+
+#Age
+p8 = ggplot(df1, aes(x = age, y = strength)) + geom_point() +
+     labs(x = "Age (Days)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)
+p1
+p2
+p3
+p4
+p5
+p6
+p7
+p8
+
+```
+
+```{r}
+M0 = lm(strength ~ 1, data = df) #Linear-Linear Null Model
+M1 = lm(strength ~ ., data = df) #Linear-Linear Full Model
+```
+
+```{r}
+#Linear-Linear Backward
+step.back.aic = step(M1, direction = "backward", trace = FALSE)
+round(summary(step.back.aic)$coef, 3)
+
+#Linear-Linear Forward
+step.fwd.aic = step(M0, scope = list(lower = M0, upper = M1), direction = "forward", trace = FALSE)
+round(summary(step.fwd.aic)$coef, 3)
+```
+
+```{r}
+#Linear-Linear Models
+sjPlot::tab_model(
+  step.fwd.aic, step.back.aic,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Linear-Linear Forward Model",
+                "Linear-Linear Backward Model")
+)
+```
+
+```{r}
+autoplot(step.fwd.aic, which = 1:2)#linear forward
+```
+```{r}
+autoplot(step.back.aic, which = 1:2)#linear backward
+```
+```{r}
+df
+```
+#linear-linear model rmse fwd
+```{r}
+library(caret)
+cv_fwd= train(
+  strength ~ cement+plasticizer+age+slag+water+flyash,df,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_fwd
+```
+#linear-linear rmse back 
+```{r}
+cv_back= train(
+  strength ~ cement+plasticizer+age+slag+water+flyash+fineagg+coarseagg,df,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_back
+```
+#log-linear
+
+```{r}
+df2 = df %>% mutate(lstrength = log(strength))
+df2 = select(df2, -strength)
+df2
+```
+
+```{r}
+M2 = lm(lstrength ~ 1, data = df2) #Log-Linear Null Model
+M3 = lm(lstrength ~ ., data = df2) #Log-Linear Full Model
+```
+
+
+```{r}
+#log-Linear Backward
+step.back.aic2 = step(M3, direction = "backward", trace = FALSE)
+round(summary(step.back.aic2)$coef, 3)
+
+#log-Linear Forward
+step.fwd.aic2 = step(M2, scope = list(lower = M2, upper = M3), direction = "forward", trace = FALSE)
+round(summary(step.fwd.aic2)$coef, 3)
+```
+
+```{r}
+#Log-Linear Models
+sjPlot::tab_model(
+  step.fwd.aic2, step.back.aic2,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Log-Linear Forward Model",
+                "Log-Linear Backward Model")
+)
+```
+
+```{r}
+autoplot(step.back.aic2, which = 1:2)
+```
+
+```{r}
+cv_log= train(
+  lstrength ~ cement+plasticizer+age+slag+water+flyash,df2,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_log
+```
+
+#No age linear linear
+```{r}
+df3 = select(df, -age)
+df3
+```
+
+
+```{r}
+M4 = lm(strength ~ 1, data = df3) #Linear-Linear Null Model
+M5 = lm(strength ~ ., data = df3) #Linear-Linear Full Model
+```
+
+```{r}
+#Linear-Linear Backward
+step.back.aic3 = step(M5, direction = "backward", trace = FALSE)
+round(summary(step.back.aic3)$coef, 3)
+
+#Linear-Linear Forward
+step.fwd.aic3 = step(M4, scope = list(lower = M4, upper = M5), direction = "forward", trace = FALSE)
+round(summary(step.fwd.aic3)$coef, 3)
+```
+
+```{r}
+autoplot(step.back.aic3, which = 1:2)
+```
+
+```{r}
+cv_noage= train(
+  strength ~ cement+plasticizer+slag+water+flyash,df3,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_noage
+```
+#no age log linear
+```{r}
+df4= df3 %>% mutate(lstrength = log(strength))
+df4 = select(df4, -strength)
+df4
+```
+```{r}
+M6 = lm(lstrength ~ 1, data = df4) #Linear-Linear Null Model
+M7 = lm(lstrength ~ ., data = df4) #Linear-Linear Full Model
+```
+
+```{r}
+#log-Linear Backward
+step.back.aic4 = step(M7, direction = "backward", trace = FALSE)
+round(summary(step.back.aic4)$coef, 3)
+
+#log-Linear Forward
+step.fwd.aic4 = step(M6, scope = list(lower = M6, upper = M7), direction = "forward", trace = FALSE)
+round(summary(step.fwd.aic4)$coef, 3)
+```
+
+```{r}
+autoplot(step.back.aic4, which = 1:2)
+```
+```{r}
+autoplot(step.fwd.aic4, which = 1:2)
+```
+
+
+```{r}
+cv_noagelog= train(
+  lstrength ~ cement+plasticizer+slag+water+flyash+fineagg,df4,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_noagelog
+```
+
+```{r}
+cv_noagelog= train(
+  lstrength ~ cement+plasticizer+slag+water+flyash+coarseagg,df4,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+cv_noagelog
+```
+
+```{r}
+#Stepwise Variable Selection
+lM2 = lm(lstrength ~ ., data = df4)
+drop1(lM2, test = "F")
+lM3 = update(lM2, . ~ . - coarseagg)
+drop1(lM3, test = "F")
+lM4 = update(lM3, . ~ . -fineagg)
+drop1(lM4, test = "F")
+

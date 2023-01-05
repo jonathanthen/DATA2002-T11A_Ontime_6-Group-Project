@@ -1,0 +1,265 @@
+---
+title: "DATA2002 Group Presentation"
+## ⚔<br/>with xaringan
+author: "T11A_Ontime_6"
+date: "USYD | DATA2002 | November 2020"
+output:
+  xaringan::moon_reader:
+    css: ["default", "fc", "fc-fonts"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      countIncrementalSlides: false
+---
+
+```{r, include=FALSE, warning=FALSE, message=FALSE}
+#Required to Run
+#install.packages("xaringan")
+```
+
+# Introduction
+
+### Aim
+-  Demonstrate the possibilities of adapting Multiple Linear Regression (MLR) to predict the compressive strength of high-performance concrete at the age of 28 days using the Concrete dataset
+
+### Questions
+- Are all variables in our dataset can be used to predict the compressive concrete strength at the age of 28 days?
+
+- What is the most significant factor in predicting the compressive concrete strength at the age of 28 days?
+
+### Results
+
+- Super Plasticizer can not used to predict the compressive concrete strength at the age of 28 days 
+
+- Cement is the most significant factors in predicting compressive strength of high-performance concrete at the age of 28 days
+---
+# Data Descrpition
+#### The dataset which is allocated for us group 6 is *Concrete Strength* dataset.
+
+### Data source
+>This datast can be found on the UCI machine learning repository,
+link: https://archive.ics.uci.edu/ml/datasets/concrete+compressive+strength 
+
+
+It is donated by its original owner --- Prof. I-Cheng Yeh, Department of Information Management, chung-Hua University, Hsin Chu, Taiwan 30067, R.O.C.   
+(*How has these data been collected? *)
+### Data summary
+- 1030 observations with 9 quantitative variables 
+- 1 dependent variable: Compressive Concrete Strength
+- 8 independent variables: Cement, Blast Furnace Slag, Fly Ash, Water, Superplasticizer, Coarse Aggregate,
+Fine Aggregate and Age
+
+---
+
+#Data Exploration
+
+### Age
+- The actual concrete compressive strength (MPa) for a given mixture under a specific age was determined from laboratory 
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(moonBook)
+library(webr)
+library(sjPlot)
+library(GGally)
+library(qtlcharts)
+library(ggfortify)
+y = readxl::read_excel("Concrete_Data.xls") %>% janitor::clean_names()
+colnames(y)[1] = "cement"
+colnames(y)[2] = "slag"
+colnames(y)[3] = "flyash"
+colnames(y)[4] = "water"
+colnames(y)[5] = "plasticizer"
+colnames(y)[6] = "coarseagg"
+colnames(y)[7] = "fineagg"
+colnames(y)[8] = "age"
+colnames(y)[9] = "strength"
+```
+
+.pull-left-50[
+```{r echo=FALSE, message = FALSE, warning = FALSE, out.width="100%"}
+knitr ::include_graphics("age_ConcreteStrength.png")
+```
+- In theory, provided the concrete is not allowed to dry out, then it will always be increasing albeit at an ever reducing rate. For convenience and for most practical applications, it is generally accepted that the majority of the strength has been achieved by 28 days.
+]
+
+.pull-right-50[
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+ggplot(y,mapping = aes(x = age) )+geom_histogram(binwidth = 10)
+```
+
+]
+
+- So we filter our data with only age = 28 days
+---
+
+# Data Exploration
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+y2=y %>% filter(age==28)
+y2 =select(y2,-age)
+ggpairs(y2)
+```
+
+---
+# Full model 
+
+- Firstly, we begin with fitting the multiple linear regression model using all the predictors in the dataset 
+
+.pull-left-50[
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+M0= lm(strength ~ 1, data = y2) #Linear-Linear Null Model
+M1= lm(strength ~ ., data = y2) #Linear-Linear Full Model
+sjPlot::tab_model(M1, show.ci = FALSE, show.aic=TRUE, dv.labels = "Full Model")
+```
+]
+
+.pull-right-50[
+- The p-value of water and plasticizer are bigger than the significance level of 0.05
+- We will perform model selection later to examine dropping of those insignificant variables 
+]
+---
+# Assumption Checking
+```{r echo=FALSE, message = FALSE, warning = FALSE,out.width="100%"}
+knitr ::include_graphics("AssumptionChecking.png")
+```
+
+- Linearity: There is a slight curved pattern in the residual vs fitted values plot. We are overestimating concrete strength for low and high fitted values.
+
+- Independence: It is assumed that the observations are not related to one another as this was dealt with in the experimental design phase, before data collection.
+
+- Homoscedasticity: There does seem to be some fanning out of the residuals in the residual vs fitted value plot, indicating that there may be some heteroskedasticity in the our data.
+
+- Normality: Based on the QQPlot, the bottom and top points are not on the line. However, we could appeal to the Central Limit Theorem because we have a reasonable amount of observations meaning our inferences are approximately valid.
+
+---
+
+# Model Selection - stepwise 
+
+- Although the homoscedasticity assumption is a little bit violated, we still proceed to stepwise model selection
+- We use both the forward and backward selection method, they arrived at the same model without the predictor "plasticizer" 
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+#Linear-Linear Backward
+back1 = step(M1, direction = "backward", trace = FALSE)
+
+
+#Linear-Linear Forward
+fwd1= step(M0, scope = list(lower = M0, upper = M1), direction = "forward", trace = FALSE)
+
+sjPlot::tab_model(
+  back1, fwd1,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Forward Model",
+                "Backward Model")
+)
+```
+
+---
+# Assumption Checking
+```{r echo=FALSE, message = FALSE, warning = FALSE, out.width='100%'}
+knitr ::include_graphics("AssumptionChecking_2.png")
+```
+-There are still some heteroskedasticity in the our data as in the full model
+
+---
+# Model selection
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+sjPlot::tab_model(
+  M1, fwd1,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Full Model",
+                "Stepwise Model")
+)
+```
+
+---
+
+#Results
+### Our Final Model
+\begin{align*}
+\large
+\operatorname{Strength} = -81.93 + 0.17(\operatorname{Cement}) + 0.14(\operatorname{Blast Furnace Slag}) - 0.09(\operatorname{Water}) \newline \large +0.11(\operatorname{Fly Ash}) + 0.05(\operatorname{Fine Aggregate}) + 0.04(\operatorname{Coarse Aggregate}) + \epsilon
+\end{align*}
+
+### Interpretation
+Holding all other variables constant
+- Increase 1 kg of Cement results in 0.17 Mpa increase in concrete compressive strength at age of 28 days on average
+
+- Increase 1 kg of Blast Furnace Slag results in 0.14 Mpa increase in concrete compressive strength at age of 28 days on average
+
+- Increase 1 kg of Fly Ash results in 0.11 Mpa increase in concrete compressive strength at age of 28 days on average
+
+- Increase 1 kg of Water results in 0.09 Mpa decrease in concrete compressive strength at age of 28 days on average
+---
+#Inference
+
+### Model output
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+sjPlot::tab_model(back1, show.ci=0.95,show.aic = TRUE, dv.labels = "Final Model")
+```
+
+---
+# Inference
+### Individual t test on each predictor
+**Hypothesis:**
+$H_{0}: \beta_{i} = 0$ vs $H_{1}:\beta_{i} \neq 0$
+
+**Assumptions:**
+The residuals are iid normal distribution with mean of zero and constant variance of ${\sigma}^2$ and there is a linear relationship between concrete strength and each predictor
+
+**P-value:**
+Each of the p-value is less than 0.05
+
+**Decision:**
+We reject null hypothesis and conclude that there is very strong evidence in the data to indicate a linear relationship between each predictor and the concrete strength
+
+### Confidence interval for each predictor
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+confint(back1) %>% round(3)
+```
+
+---
+
+#Performance
+
+### Comparing Performance
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+per_table <- matrix(c(7.1688,7.0898,0.7733,0.7699, 5.3890, 5.3254, 2881.297, 2880.591),ncol=2,byrow=TRUE)
+colnames(per_table) <- c("Full Model", "Final Model")
+rownames(per_table) <- c("RMSE","Rsuared","MAE", "AIC")
+per_table <- as.table(per_table)
+per_table
+
+```
+
+
+### In sample performance
+- Our full model actually explains a slightly more percentage of total variability in concrete strength at age of 28 days according to adjusted R-squared.
+
+- However, our final model has a slightly lower AIC compared to the full model and it is better to assess the performance on AIC because we used a stepwise model selection technique
+
+### Out of sample performance:
+- Our final model predicts observations that we didn't use to build the model better as it has higher RMSE and MAE
+
+- We definitely want a model that predicts better
+
+---
+#Conclusion
+
+### Our Results
+
+- Based on our final chosen model, Super Plasticizer is excluded in the multiple linear regression model for predicting compressive concrete strength at age of 28 days
+
+- Based on the coefficients of the predictors, Cement can increase the compressive concrete strength most keeping all other variables constant
+
+### Limitations
+
+- According to the assumption checking of our final model, there is slight heteroskedasticity in our data, so the standard errors computed for the least squares estimators are incorrect. This can affect confidence intervals and hypothesis testing that use those standard errors, which could lead to misleading conclusions.
+
+- We can still perform our regression analysis to correct the issue of incorrect standard errors so that our interval estimates and hypothesis tests are valid by using heteroskedasticity-consistent standard errors or simply robust standard errors.

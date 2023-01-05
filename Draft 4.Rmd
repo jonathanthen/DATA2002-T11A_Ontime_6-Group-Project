@@ -1,0 +1,358 @@
+---
+title: "final"
+author: "Yujia Zhai"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(moonBook)
+library(webr)
+library(sjPlot)
+library(GGally)
+library(qtlcharts)
+library(ggfortify)
+```
+
+```{r}
+x = readxl::read_excel("data/Concrete_Data.xls") %>% janitor::clean_names()
+x%>% skimr::skim()
+x
+```
+```{r}
+colnames(x)[1] = "cement"
+colnames(x)[2] = "slag"
+colnames(x)[3] = "flyash"
+colnames(x)[4] = "water"
+colnames(x)[5] = "plasticizer"
+colnames(x)[6] = "coarseagg"
+colnames(x)[7] = "fineagg"
+colnames(x)[8] = "age"
+colnames(x)[9] = "strength"
+```
+
+```{r}
+#Cement
+p1 = ggplot(x, aes(x = cement, y = strength)) + geom_point() +
+     labs(x = "Cement (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+
+#Slag
+p2 = ggplot(x, aes(x = slag, y = strength)) + geom_point() +
+     labs(x = "Slag (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+
+#FlyAsh
+p3 = ggplot(x, aes(x = flyash, y = strength)) + geom_point() +
+     labs(x = "FlyAsh (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+
+#Water
+p4 = ggplot(x, aes(x = water, y = strength)) + geom_point() +
+     labs(x = "Water (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+
+#Plasticizer
+p5 = ggplot(x, aes(x = plasticizer, y = strength)) + geom_point() +
+     labs(x = "Plasticizer (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+#Coarse Aggregate
+p6 = ggplot(x, aes(x = coarseagg, y = strength)) + geom_point() +
+     labs(x = "Coarse Aggregate (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+
+#Fine Aggregate
+p7 = ggplot(x, aes(x = fineagg, y = strength)) + geom_point() +
+     labs(x = "Fine Aggregate (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+
+#Age
+p8 = ggplot(x, aes(x = age, y = strength)) + geom_point() +
+     labs(x = "Age (Days)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p1
+p2
+p3
+p4
+p5
+p6
+p7
+p8
+```
+
+```{r}
+x2=x %>% filter(age==28)
+x3 =select(x2,-slag,-flyash,-plasticizer,-age)
+x3
+```
+```{r}
+hist(x3$strength, 
+     main="Histogram for strength", 
+     xlab="age",
+     prob = TRUE)
+lines(density(x3$strength))
+
+hist(x3$cement, 
+     main="Histogram for cement", 
+     xlab="age",
+     prob = TRUE)
+lines(density(x3$cement))
+
+hist(x3$water, 
+     main="Histogram for water", 
+     xlab="age",
+     prob = TRUE)
+lines(density(x3$water))
+
+hist(x3$coarseagg, 
+     main="Histogram for coarseagg", 
+     xlab="age",
+     prob = TRUE)
+lines(density(x3$coarseagg))
+
+hist(x3$fineagg, 
+     main="Histogram for fineagg", 
+     xlab="age",
+     prob = TRUE)
+lines(density(x3$fineagg))
+```
+```{r}
+#Cement
+p1 = ggplot(x3, aes(x = cement, y = strength)) + geom_point() +
+     labs(x = "Cement (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+#water
+p2 = ggplot(x3, aes(x = water, y = strength)) + geom_point() +
+     labs(x = "water (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+#fineagg
+p3 = ggplot(x3, aes(x = fineagg, y = strength)) + geom_point() +
+     labs(x = "fineagg (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+
+p4 = ggplot(x3, aes(x = coarseagg, y = strength)) + geom_point() +
+     labs(x = "coarseagg (kg/m^3)", y = "Concrete Strength (mpa)") +
+     geom_smooth(method = "lm", se = FALSE)+geom_smooth(method = "loess", se = FALSE,col='red')
+p1
+p2
+p3
+p4
+
+```
+```{r}
+hist(log(x3$strength), 
+     main="Histogram for strength", 
+     xlab="age",
+     prob = TRUE)
+lines(density(log(x3$strength)))
+
+hist(log(x3$cement), 
+     main="Histogram for cement", 
+     xlab="age",
+     prob = TRUE)
+lines(density(log(x3$cement)))
+
+hist(log(x3$water), 
+     main="Histogram for water", 
+     xlab="age",
+     prob = TRUE)
+lines(density(log(x3$water)))
+
+hist(log(x3$coarseagg), 
+     main="Histogram for coarseagg", 
+     xlab="age",
+     prob = TRUE)
+lines(density(log(x3$coarseagg)))
+
+hist(log(x3$fineagg), 
+     main="Histogram for fineagg", 
+     xlab="age",
+     prob = TRUE)
+lines(density(log(x3$fineagg)))
+```
+
+
+#linear model
+```{r}
+linearnull = lm(strength ~ 1, data = x3) #Linear-Linear Null Model
+linearfull= lm(strength ~ ., data = x3) #Linear-Linear Full Model
+
+#Linear-Linear Backward
+linearback = step(linearfull, direction = "backward", trace = FALSE)
+round(summary(linearback)$coef, 3)
+
+#Linear-Linear Forward
+linearfwd = step(linearnull, scope = list(lower = linearnull, upper = linearfull), direction = "forward", trace = FALSE)
+round(summary(linearfwd)$coef, 3)
+```
+
+```{r}
+#Linear-Linear Models
+sjPlot::tab_model(
+  linearfwd, linearback,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("Linear-Linear Forward Model",
+                "Linear-Linear Backward Model")
+)
+```
+
+```{r}
+autoplot(linearfwd)
+
+```
+
+```{r}
+library(caret)
+linear= train(
+  strength ~ cement+water+fineagg+coarseagg,x3,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+linear
+```
+
+```{r}
+x4=x3%>%mutate(lstrength=log(strength),
+               lcement=log(cement),
+               lwater=log(water),
+               lcoarse=log(coarseagg),
+               lfine=log(fineagg)
+               )
+x4=select(x4,-strength,-cement,-water,-coarseagg,-fineagg)
+x4
+```
+```{r}
+lognull = lm(lstrength ~ 1, data = x4) #Linear-Linear Null Model
+logfull= lm(lstrength ~ ., data = x4) #Linear-Linear Full Model
+
+#Linear-Linear Backward
+logback = step(logfull, direction = "backward", trace = FALSE)
+round(summary(logback)$coef, 3)
+
+#Linear-Linear Forward
+logfwd = step(lognull, scope = list(lower = lognull, upper = logfull), direction = "forward", trace = FALSE)
+round(summary(logfwd)$coef, 3)
+```
+
+```{r}
+sjPlot::tab_model(
+  logfwd, logback,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("log-log Forward Model",
+                "log-log Backward Model")
+)
+```
+
+```{r}
+autoplot(logfwd)
+
+```
+```{r}
+library(caret)
+logfwd= train(
+  lstrength ~ lcement+lcoarse+lfine+lwater,x4,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+logfwd
+```
+
+
+```{r}
+x5 =select(x2,-slag,-flyash,-age)
+x5
+```
+```{r}
+linearnull2 = lm(strength ~ 1, data = x5) #Linear-Linear Null Model
+linearfull2= lm(strength ~ ., data = x5) #Linear-Linear Full Model
+
+#Linear-Linear Backward
+linearback2 = step(linearfull2, direction = "backward", trace = FALSE)
+round(summary(linearback2)$coef, 3)
+
+#Linear-Linear Forward
+linearfwd2 = step(linearnull2, scope = list(lower = linearnull2, upper = linearfull2), direction = "forward", trace = FALSE)
+round(summary(linearfwd2)$coef, 3)
+```
+
+```{r}
+sjPlot::tab_model(
+  linearfwd2, linearback2,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("linear-linear Forward Model",
+                "linear-linear Backward Model")
+)
+```
+
+```{r}
+autoplot(linearfwd2)
+autoplot(linearback2)
+```
+```{r}
+library(caret)
+linearfwdcv= train(
+  strength ~ cement+coarseagg+fineagg+water+plasticizer,x5,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+linearfwdcv
+```
+
+```{r}
+x6=x5%>%mutate(lstrength=log(strength))
+
+x6=select(x6,-strength)
+x6
+```
+```{r}
+lognull3 = lm(lstrength ~ 1, data = x6) #Linear-Linear Null Model
+logfull3= lm(lstrength ~ ., data = x6) #Linear-Linear Full Model
+
+#Linear-Linear Backward
+logback3 = step(logfull3, direction = "backward", trace = FALSE)
+round(summary(logback3)$coef, 3)
+
+#Linear-Linear Forward
+logfwd3 = step(lognull3, scope = list(lower = lognull3, upper = logfull3), direction = "forward", trace = FALSE)
+round(summary(logfwd3)$coef, 3)
+```
+
+```{r}
+sjPlot::tab_model(
+  logfwd3, logback3,
+  show.ci = FALSE, 
+  show.aic = TRUE,
+  dv.labels = c("log-linear Forward Model",
+                "log-linear Backward Model")
+)
+```
+
+
+```{r}
+autoplot(logfwd3)
+autoplot(logback3)
+```
+```{r}
+library(caret)
+logfwd3= train(
+  lstrength ~ cement+coarseagg+fineagg+water+plasticizer,x6,
+  method='lm',
+  trControl=trainControl(method='cv',number=10,verboseIter=FALSE)
+)
+logfwd3
+```
+
+
+
+
+
+
+
